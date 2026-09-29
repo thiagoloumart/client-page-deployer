@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Page Deployer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --primary: #2563eb;
+    --secondary: #7c3aed;
+    --accent: #10b981;
+    --text: #f0f0f8;
+    --muted: #6b7280;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --error: #ef4444;
+    --radius: 12px;
+    --grid-color: rgba(37,99,235,0.03);
+    --terminal-bg: #080810;
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --border: #e1e4e8;
+    --primary: #2563eb;
+    --secondary: #7c3aed;
+    --accent: #10b981;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --error: #ef4444;
+    --radius: 12px;
+    --grid-color: rgba(37,99,235,0.02);
+    --terminal-bg: #1a1a2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 16px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .card, .terminal, .login-box, .modal-content, input, select, .dropzone {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* ── Grid bg ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Login Screen ── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: var(--bg);
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-box::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .login-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 32px;
+    line-height: 1.1;
+  }
+
+  /* ── App Layout ── */
+  #app {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    padding: 5px 10px;
+    border-radius: 6px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* ── Main ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 40px;
+    display: grid;
+    grid-template-columns: 1fr 500px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* ── Form ── */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  .url-preview {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+
+  .url-prefix {
+    background: var(--border);
+    color: var(--muted);
+    padding: 12px 10px;
+    white-space: nowrap;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .url-input {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'DM Mono', monospace !important;
+    font-size: 12px !important;
+    flex: 1;
+    min-width: 60px;
+    padding: 12px 8px !important;
+  }
+
+  .url-suffix {
+    color: var(--muted);
+    padding: 12px 8px;
+    white-space: nowrap;
+    border-left: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .url-separator {
+    color: var(--muted);
+    padding: 12px 4px;
+    display: flex;
+    align-items: center;
+  }
+
+  #url-live {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--success);
+    margin-top: 6px;
+    min-height: 18px;
+    transition: all 0.2s;
+  }
+
+  /* ── Drop Zone ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(16,185,129,0.04);
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .dropzone-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .dropzone-text {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .dropzone-text strong {
+    color: var(--text);
+  }
+
+  #file-list {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .file-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .file-tag.html { border-color: var(--accent); color: var(--accent); }
+  .file-tag.css { border-color: #7b68ee; color: #7b68ee; }
+  .file-tag.js { border-color: var(--warn); color: var(--warn); }
+  .file-tag.img { border-color: var(--success); color: var(--success); }
+
+  .index-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ── HTML Selector ── */
+  #html-selector {
+    display: none;
+    margin-top: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  .html-selector-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .html-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .html-option:hover { color: var(--text); }
+
+  .html-option input[type="radio"] {
+    width: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* ── Button ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+  .btn-icon {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid transparent;
+    padding: 5px 8px;
+    font-size: 13px;
+    border-radius: 6px;
+    line-height: 1;
+  }
+
+  .btn-icon:hover { background: rgba(255,59,92,0.1); color: var(--error); border-color: rgba(255,59,92,0.3); }
+
+  .btn-visit {
+    background: transparent;
+    color: var(--success);
+    border: 1px solid rgba(0,229,160,0.3);
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .btn-visit:hover { background: rgba(0,229,160,0.08); border-color: var(--success); }
+
+  /* ── Log terminal ── */
+  .terminal {
+    background: var(--terminal-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .terminal-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .terminal-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  #log-output {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 20px;
+    min-height: 200px;
+    max-height: 380px;
+    overflow-y: auto;
+    color: #8888aa;
+  }
+
+  #log-output .log-info  { color: #8888aa; }
+  #log-output .log-success { color: var(--success); }
+  #log-output .log-error { color: var(--error); }
+  #log-output .log-warn  { color: var(--warn); }
+
+  .log-line { padding: 1px 0; }
+  .log-line::before { content: '> '; color: var(--muted); }
+
+  /* ── Success banner ── */
+  .success-banner {
+    display: none;
+    background: linear-gradient(135deg, rgba(0,229,160,0.1), rgba(0,229,160,0.05));
+    border: 1px solid var(--success);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-top: 16px;
+  }
+
+  .success-banner.show { display: block; }
+
+  .success-url {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--success);
+    word-break: break-all;
+    font-weight: 500;
+  }
+
+  /* ── Deployments list ── */
+  .deploy-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .deploy-item:last-child { border-bottom: none; }
+
+  .deploy-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .deploy-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 3px;
+    word-break: break-word;
+  }
+
+  .deploy-url {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    word-break: break-all;
+  }
+
+  .deploy-date {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: left;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+  }
+
+  .deploy-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error box ── */
+  .error-msg {
+    background: rgba(255,59,92,0.1);
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--error);
+    margin-top: 12px;
+    display: none;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .tab:hover {
+    color: var(--text);
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-counter {
+    display: inline-block;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+
+  .tab.active .tab-counter {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Edit Modal ── */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal.show {
+    display: flex;
+  }
+
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .modal-actions .btn {
+    flex: 1;
+  }
+
+  /* ── Theme Toggle ── */
+  .theme-toggle {
+    position: relative;
+    width: 56px;
+    height: 28px;
+    background: var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    padding: 0;
+  }
+
+  .theme-toggle::before {
+    content: '🌙';
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: var(--surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  [data-theme="light"] .theme-toggle::before {
+    content: '☀️';
+    left: 32px;
+  }
+
+  .theme-toggle:hover {
+    background: var(--accent);
+  }
+
+  /* ── Main Tabs ── */
+  .main-tab {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 16px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .main-tab:hover {
+    color: var(--text);
+    background: rgba(16,185,129,0.05);
+  }
+
+  .main-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Admin Section ── */
+  .admin-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+
+  .user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+
+  .user-item:last-child {
+    border-bottom: none;
+  }
+
+  .user-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .user-meta {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .badge.admin {
+    background: var(--secondary);
+  }
+
+  .user-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1024px) {
+    main {
+      grid-template-columns: 1fr 400px;
+      gap: 24px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    main {
+      grid-template-columns: 1fr;
+      padding: 24px 16px;
+    }
+
+    header {
+      padding: 16px 20px;
+    }
+
+    .login-box {
+      padding: 32px 24px;
+      margin: 16px;
+    }
+
+    .login-title {
+      font-size: 28px;
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .deploy-actions {
+      flex-wrap: wrap;
+    }
+
+    .deploy-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .deploy-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .logo-text {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      font-size: 15px;
+      padding: 14px;
+    }
+
+    .login-title {
+      font-size: 24px;
+    }
+
+    header {
+      padding: 12px 16px;
+    }
+
+    main {
+      padding: 16px 12px;
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 12px;
+    }
+
+    .deploy-name {
+      font-size: 14px;
+    }
+
+    .btn-visit {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Deployer</div>
+    <h1 class="login-title">Deploy<br>Manager</h1>
+
+    <div class="form-group">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="error-msg" id="login-error">Usuário ou senha incorretos.</div>
+    <button class="btn btn-primary" onclick="doLogin()" id="login-btn">
+      <span id="login-spinner" class="spinner" style="display:none"></span>
+      Entrar
+    </button>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app">
+  <header>
+    <div class="logo">
+      <span class="logo-badge">LM</span>
+      <span class="logo-text">Client Page Deployer</span>
+    </div>
+    <div class="header-actions">
+      <span id="user-info" style="color: var(--muted); font-size: 13px; margin-right: 16px;"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema"></button>
+      <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- Main Tabs -->
+  <div style="border-bottom: 1px solid var(--border); background: var(--bg);">
+    <div style="max-width: 1100px; margin: 0 auto; padding: 0 40px; display: flex; gap: 8px;">
+      <button class="main-tab active" onclick="switchMainTab('deploy')">
+        📦 Deploy
+      </button>
+      <button class="main-tab" id="admin-tab" onclick="switchMainTab('admin')" style="display:none;">
+        ⚙️ Admin
+      </button>
+    </div>
+  </div>
+
+  <main id="deploy-section">
+    <!-- Left: Form -->
+    <div>
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-title">Novo Deploy</div>
+
+        <div class="form-group">
+          <label>Nome do projeto</label>
+          <input type="text" id="empresa" placeholder="Ex: Ferro Velho Burger" oninput="updatePreview()">
+        </div>
+
+        <div class="form-group">
+          <label>Contexto (caminho após a barra)</label>
+          <div class="url-preview">
+            <span class="url-prefix">https://</span>
+            <input type="text" class="url-input" id="empresa-slug" placeholder="empresa" readonly>
+            <span class="url-separator">/</span>
+            <input type="text" class="url-input" id="contexto" placeholder="fevereiro" oninput="updatePreview()">
+            <span class="url-suffix" id="urlSuffix">.example.com</span>
+          </div>
+          <div id="url-live"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Arquivos (index.html ou pasta completa)</label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="file-input" multiple accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.ico,.json,.woff,.woff2,.ttf" onchange="handleFiles(this.files)">
+            <span class="dropzone-icon">📁</span>
+            <div class="dropzone-text">
+              <strong>Clique para selecionar</strong> ou arraste os arquivos aqui<br>
+              <small>HTML, CSS, JS, imagens e fontes</small>
+            </div>
+          </div>
+          <div id="file-list"></div>
+          <!-- HTML selector: shown when multiple .html files are uploaded -->
+          <div id="html-selector">
+            <div class="html-selector-title">Selecione o arquivo principal (será servido como index.html)</div>
+            <div id="html-options"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="deploy-btn" onclick="startDeploy()" disabled>
+          <span id="deploy-spinner" class="spinner"></span>
+          <span id="deploy-label">🚀 Fazer Deploy</span>
+        </button>
+
+        <div class="error-msg" id="deploy-error"></div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal" id="terminal-wrap" style="display:none">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="terminal-title">deploy log</span>
+        </div>
+        <div id="log-output"></div>
+      </div>
+
+      <!-- Success -->
+      <div class="success-banner" id="success-banner">
+        <div style="font-size:13px; color: var(--success); font-weight:700; margin-bottom:8px; letter-spacing:.1em; text-transform:uppercase;">✅ Deploy Concluído</div>
+        <a id="success-url" class="success-url" href="#" target="_blank"></a>
+        <button class="btn btn-primary" onclick="newDeploy()" style="margin-top:16px; background: var(--secondary);">
+          🚀 Fazer Novo Deploy
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: History -->
+    <div>
+      <div class="card">
+        <div class="card-title">Histórico</div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('active')">
+            Ativos <span class="tab-counter" id="active-counter">0</span>
+          </button>
+          <button class="tab" onclick="switchTab('archived')">
+            Arquivados <span class="tab-counter" id="archived-counter">0</span>
+          </button>
+        </div>
+
+        <div id="deployments-list">
+          <div style="color: var(--muted); font-size:14px; text-align:center; padding:20px 0;">Nenhum deploy ainda</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Admin Section -->
+  <div id="admin-section" class="admin-section" style="display:none;">
+    <div class="card">
+      <div class="card-title">Gerenciar Usuários</div>
+
+      <!-- Add User Form -->
+      <div style="background: var(--surface2); border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);">➕ Adicionar Usuário</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 12px; align-items: end;">
+          <div class="form-group" style="margin: 0;">
+            <label>Username</label>
+            <input type="text" id="new-username" placeholder="usuario">
+          </div>
+
+          <div class="form-group" style="margin: 0;">
+            <label>Senha</label>
+            <input type="password" id="new-password" placeholder="••••••••">
+          </div>
+
+          <div class="form-group" style="margin: 0;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text);">
+              <input type="checkbox" id="new-isAdmin" style="width: auto;">
+              Admin
+            </label>
+          </div>
+
+          <button class="btn btn-primary" onclick="createUser()" style="padding: 12px 20px;">
+            ➕ Adicionar
+          </button>
+        </div>
+      </div>
+
+      <!-- Users List -->
+      <div id="users-list">
+        <div style="color: var(--muted); font-size:14px; text-align:center; padding:20px 0;">Carregando usuários...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal" id="edit-user-modal">
+  <div class="modal-content">
+    <div class="modal-title">✏️ Editar Usuário</div>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="edit-user-username" placeholder="usuario">
+    </div>
+
+    <div class="form-group">
+      <label>Nova Senha (deixe vazio para manter)</label>
+      <input type="password" id="edit-user-password" placeholder="••••••••">
+    </div>
+
+    <div class="form-group">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 14px; color: var(--text);">
+        <input type="checkbox" id="edit-user-isAdmin" style="width: auto;">
+        Administrador
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditUserModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUserEdit()" style="background: var(--accent);">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Deploy Modal -->
+<div class="modal" id="edit-modal">
+  <div class="modal-content">
+    <div class="modal-title">✏️ Editar Deploy</div>
+
+    <div class="form-group">
+      <label>Nome do projeto</label>
+      <input type="text" id="edit-empresa" placeholder="Ex: Ferro Velho Burger">
+    </div>
+
+    <div class="form-group">
+      <label>Contexto</label>
+      <input type="text" id="edit-contexto" placeholder="Ex: fevereiro">
+    </div>
+
+    <div class="form-group">
+      <label>Atualizar arquivos (opcional)</label>
+      <div class="dropzone" id="edit-dropzone" style="padding: 30px 15px;">
+        <input type="file" id="edit-file-input" multiple accept=".html,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.ico,.json,.woff,.woff2,.ttf" onchange="handleEditFiles(this.files)">
+        <span class="dropzone-icon">📁</span>
+        <div class="dropzone-text">
+          <strong>Clique para selecionar</strong> ou arraste<br>
+          <small>Deixe vazio para manter os arquivos atuais</small>
+        </div>
+      </div>
+      <div id="edit-file-list" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+      <div id="edit-html-selector" style="display:none; margin-top: 12px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 8px; padding: 12px 16px;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px;">Selecione o arquivo principal (index.html)</div>
+        <div id="edit-html-options"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEdit()" style="background: var(--accent);">
+        <span id="edit-spinner" class="spinner" style="display:none;"></span>
+        <span id="edit-label">Salvar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Global State ──────────────────────────────────────────
+  let currentUser = null;
+  let BASE_DOMAIN = 'example.com';
+
+  async function loadConfig() {
+    const r = await fetch('/api/config');
+    if (!r.ok) return;
+    BASE_DOMAIN = (await r.json()).domain || BASE_DOMAIN;
+    document.getElementById('urlSuffix').textContent = '.' + BASE_DOMAIN;
+  }
+
+  // ── Auth ──────────────────────────────────────────────────
+  async function checkAuth() {
+    const r = await fetch('/api/me');
+    if (r.ok) {
+      const data = await r.json();
+      currentUser = data;
+      showApp();
+    }
+  }
+
+  async function doLogin() {
+    const btn = document.getElementById('login-btn');
+    const spinner = document.getElementById('login-spinner');
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('login-user').value,
+        password: document.getElementById('login-pass').value
+      })
+    });
+
+    spinner.style.display = 'none';
+    btn.disabled = false;
+
+    if (r.ok) {
+      const data = await r.json();
+      currentUser = data;
+      showApp();
+    } else {
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function doLogout() {
+    await fetch('/api/logout', { method: 'POST' });
+    location.reload();
+  }
+
+  function showApp() {
+    loadConfig();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    // Show user info
+    if (currentUser) {
+      document.getElementById('user-info').textContent = currentUser.username;
+
+      // Show admin tab if user is admin
+      if (currentUser.isAdmin) {
+        document.getElementById('admin-tab').style.display = 'block';
+      }
+    }
+
+    loadDeployments();
+  }
+
+  // ── Main Tab Switching ────────────────────────────────────
+  function switchMainTab(tab) {
+    // Update tab styles
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // Show/hide sections
+    if (tab === 'deploy') {
+      document.getElementById('deploy-section').style.display = 'grid';
+      document.getElementById('admin-section').style.display = 'none';
+    } else if (tab === 'admin') {
+      document.getElementById('deploy-section').style.display = 'none';
+      document.getElementById('admin-section').style.display = 'block';
+      loadUsers();
+    }
+  }
+
+  // Enter key on login
+  document.getElementById('login-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // ── URL Preview ───────────────────────────────────────────
+  function slugify(str) {
+    return str.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function updatePreview() {
+    const empresa = document.getElementById('empresa').value;
+    const contexto = document.getElementById('contexto').value;
+    const slug = slugify(empresa);
+    document.getElementById('empresa-slug').value = slug;
+
+    if (slug && contexto) {
+      document.getElementById('url-live').textContent =
+        `→ https://${slug}.${BASE_DOMAIN}/${contexto}`;
+    } else {
+      document.getElementById('url-live').textContent = '';
+    }
+
+    checkReady();
+  }
+
+  // ── Files ─────────────────────────────────────────────────
+  let selectedFiles = [];
+  let mainHtmlFile = null;
+
+  function handleFiles(files) {
+    selectedFiles = Array.from(files);
+
+    // Auto-select first HTML file as main
+    const htmlFiles = selectedFiles.filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      return ['html', 'htm'].includes(ext);
+    });
+    mainHtmlFile = htmlFiles.length > 0 ? htmlFiles[0].name : null;
+
+    renderFileList();
+    renderHtmlSelector(htmlFiles);
+    checkReady();
+  }
+
+  function selectMainHtml(name) {
+    mainHtmlFile = name;
+    renderFileList();
+  }
+
+  function renderHtmlSelector(htmlFiles) {
+    const selector = document.getElementById('html-selector');
+    const options = document.getElementById('html-options');
+
+    if (htmlFiles.length <= 1) {
+      selector.style.display = 'none';
+      return;
+    }
+
+    selector.style.display = 'block';
+    options.innerHTML = htmlFiles.map(f => `
+      <label class="html-option">
+        <input type="radio" name="main-html" value="${f.name}"
+          ${f.name === mainHtmlFile ? 'checked' : ''}
+          onchange="selectMainHtml('${f.name.replace(/'/g, "\\'")}')">
+        ${f.name}
+      </label>
+    `).join('');
+  }
+
+  function renderFileList() {
+    const el = document.getElementById('file-list');
+    el.innerHTML = selectedFiles.map(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      const isHtml = ['html', 'htm'].includes(ext);
+      const isMain = f.name === mainHtmlFile;
+      const cls = isHtml ? 'html'
+        : ext === 'css' ? 'css'
+        : ext === 'js' ? 'js'
+        : ['png','jpg','jpeg','gif','svg','webp','ico'].includes(ext) ? 'img' : '';
+      const badge = isMain
+        ? '<span class="index-badge">index.html</span>'
+        : '';
+      return `<span class="file-tag ${cls}">${f.name}${badge}</span>`;
+    }).join('');
+  }
+
+  // Drag & drop
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  function checkReady() {
+    const empresa = document.getElementById('empresa').value.trim();
+    const contexto = document.getElementById('contexto').value.trim();
+    document.getElementById('deploy-btn').disabled = !(empresa && contexto && selectedFiles.length > 0);
+  }
+
+  // ── Deploy ────────────────────────────────────────────────
+  async function startDeploy() {
+    const btn = document.getElementById('deploy-btn');
+    const spinner = document.getElementById('deploy-spinner');
+    const label = document.getElementById('deploy-label');
+    const errEl = document.getElementById('deploy-error');
+    const terminal = document.getElementById('terminal-wrap');
+    const logOutput = document.getElementById('log-output');
+    const successBanner = document.getElementById('success-banner');
+
+    errEl.style.display = 'none';
+    successBanner.classList.remove('show');
+    terminal.style.display = 'block';
+    logOutput.innerHTML = '';
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    label.textContent = 'Deployando...';
+
+    const fd = new FormData();
+    fd.append('empresa', document.getElementById('empresa').value.trim());
+    fd.append('contexto', document.getElementById('contexto').value.trim());
+    if (mainHtmlFile) fd.append('mainHtml', mainHtmlFile);
+    selectedFiles.forEach(f => fd.append('files', f));
+
+    try {
+      const res = await fetch('/api/deploy', { method: 'POST', body: fd });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = JSON.parse(line.slice(6));
+
+          if (data.done) {
+            if (data.success) {
+              const urlEl = document.getElementById('success-url');
+              urlEl.href = data.url;
+              urlEl.textContent = data.url;
+              successBanner.classList.add('show');
+              loadDeployments();
+            } else {
+              errEl.textContent = '❌ ' + data.msg;
+              errEl.style.display = 'block';
+            }
+          } else {
+            const div = document.createElement('div');
+            div.className = `log-line log-${data.type || 'info'}`;
+            div.textContent = data.msg;
+            logOutput.appendChild(div);
+            logOutput.scrollTop = logOutput.scrollHeight;
+          }
+        }
+      }
+    } catch (e) {
+      errEl.textContent = '❌ Erro de conexão: ' + e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = '🚀 Fazer Deploy';
+      checkReady();
+    }
+  }
+
+  // ── Deployments ───────────────────────────────────────────
+  let currentTab = 'active';
+  let allDeployments = [];
+  let editingIndex = null;
+
+  function switchTab(tab) {
+    currentTab = tab;
+
+    // Update tab styles
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.closest('.tab').classList.add('active');
+
+    renderDeployments();
+  }
+
+  async function loadDeployments() {
+    const r = await fetch('/api/deployments');
+    allDeployments = await r.json();
+    renderDeployments();
+  }
+
+  function renderDeployments() {
+    const el = document.getElementById('deployments-list');
+
+    // Filter by tab
+    const filtered = allDeployments.filter(d => {
+      if (currentTab === 'active') return !d.archived;
+      return d.archived;
+    });
+
+    // Update counters
+    const activeCount = allDeployments.filter(d => !d.archived).length;
+    const archivedCount = allDeployments.filter(d => d.archived).length;
+    document.getElementById('active-counter').textContent = activeCount;
+    document.getElementById('archived-counter').textContent = archivedCount;
+
+    if (!filtered.length) {
+      el.innerHTML = `<div style="color: var(--muted); font-size:14px; text-align:center; padding:20px 0;">
+        ${currentTab === 'active' ? 'Nenhum deploy ativo' : 'Nenhum deploy arquivado'}
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = filtered.map((d, filteredIndex) => {
+      // Find original index in allDeployments
+      const originalIndex = allDeployments.indexOf(d);
+
+      return `
+      <div class="deploy-item">
+        <div class="deploy-date">${formatDate(d.deployedAt)}</div>
+        <div class="deploy-info">
+          <div class="status-dot"></div>
+          <div style="flex:1; min-width:0;">
+            <div class="deploy-name">${d.empresa}</div>
+            <div class="deploy-url">${d.fullDomain}/${d.contexto}</div>
+          </div>
+        </div>
+        <div class="deploy-actions">
+          <a href="https://${d.fullDomain}/${d.contexto}" target="_blank" class="btn btn-visit">↗ Visitar</a>
+          <button onclick="openEditModal(${originalIndex})" class="btn btn-icon" title="Editar" style="color: var(--accent); border-color: rgba(16,185,129,0.5);">✏️</button>
+          ${!d.archived
+            ? `<button onclick="archiveDeployment(${originalIndex})" class="btn btn-icon" title="Arquivar" style="color: var(--warn); border-color: rgba(245,158,11,0.5);">📦</button>`
+            : `<button onclick="unarchiveDeployment(${originalIndex})" class="btn btn-icon" title="Restaurar" style="color: var(--success); border-color: rgba(16,185,129,0.5);">↩️</button>`
+          }
+          <button onclick="deleteDeploymentFiles(${originalIndex})" class="btn btn-icon" title="Deletar arquivos da VPS" style="color: var(--error); border-color: rgba(255,59,92,0.5);">🗑️</button>
+          <button onclick="deleteDeployment(${originalIndex})" class="btn btn-icon" title="Remover do histórico">✕</button>
+        </div>
+      </div>
+      `;
+    }).join('');
+  }
+
+  async function deleteDeployment(index) {
+    if (!confirm('Remover do histórico? Os arquivos na VPS não serão apagados.')) return;
+    await fetch(`/api/deployments/${index}`, { method: 'DELETE' });
+    loadDeployments();
+  }
+
+  async function deleteDeploymentFiles(index) {
+    if (!confirm('⚠️ ATENÇÃO: Isso irá DELETAR PERMANENTEMENTE os arquivos da VPS!\n\nTem certeza?')) return;
+    if (!confirm('Última chance! Deletar arquivos da VPS?')) return;
+
+    try {
+      const res = await fetch(`/api/deployments/${index}/files`, { method: 'DELETE' });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ ' + data.message);
+        loadDeployments();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro ao deletar: ' + err.message);
+    }
+  }
+
+  function newDeploy() {
+    // Reset form
+    document.getElementById('empresa').value = '';
+    document.getElementById('contexto').value = '';
+    document.getElementById('file-input').value = '';
+    selectedFiles = [];
+    mainHtmlFile = null;
+    renderFileList();
+    document.getElementById('file-list').innerHTML = '';
+    document.getElementById('html-selector').style.display = 'none';
+    document.getElementById('success-banner').classList.remove('show');
+    document.getElementById('terminal-wrap').style.display = 'none';
+    document.getElementById('log-output').innerHTML = '';
+    document.getElementById('deploy-error').style.display = 'none';
+    updatePreview();
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Archive/Unarchive ─────────────────────────────────────
+  async function archiveDeployment(index) {
+    if (!confirm('Arquivar este deploy? Ele será movido para a aba "Arquivados".')) return;
+
+    try {
+      const res = await fetch(`/api/deployments/${index}/archive`, { method: 'PATCH' });
+      const data = await res.json();
+
+      if (res.ok) {
+        loadDeployments();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro ao arquivar: ' + err.message);
+    }
+  }
+
+  async function unarchiveDeployment(index) {
+    try {
+      const res = await fetch(`/api/deployments/${index}/unarchive`, { method: 'PATCH' });
+      const data = await res.json();
+
+      if (res.ok) {
+        loadDeployments();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro ao restaurar: ' + err.message);
+    }
+  }
+
+  // ── Edit Modal ────────────────────────────────────────────
+  let editSelectedFiles = [];
+  let editMainHtmlFile = null;
+
+  function openEditModal(index) {
+    editingIndex = index;
+    const deployment = allDeployments[index];
+
+    document.getElementById('edit-empresa').value = deployment.empresa;
+    document.getElementById('edit-contexto').value = deployment.contexto;
+
+    // Reset file selection
+    editSelectedFiles = [];
+    editMainHtmlFile = null;
+    document.getElementById('edit-file-input').value = '';
+    document.getElementById('edit-file-list').innerHTML = '';
+    document.getElementById('edit-html-selector').style.display = 'none';
+
+    document.getElementById('edit-modal').classList.add('show');
+  }
+
+  function closeEditModal() {
+    editingIndex = null;
+    editSelectedFiles = [];
+    editMainHtmlFile = null;
+    document.getElementById('edit-modal').classList.remove('show');
+  }
+
+  function handleEditFiles(files) {
+    editSelectedFiles = Array.from(files);
+
+    // Auto-select first HTML file as main
+    const htmlFiles = editSelectedFiles.filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      return ['html', 'htm'].includes(ext);
+    });
+    editMainHtmlFile = htmlFiles.length > 0 ? htmlFiles[0].name : null;
+
+    renderEditFileList();
+    renderEditHtmlSelector(htmlFiles);
+  }
+
+  function selectEditMainHtml(name) {
+    editMainHtmlFile = name;
+    renderEditFileList();
+  }
+
+  function renderEditHtmlSelector(htmlFiles) {
+    const selector = document.getElementById('edit-html-selector');
+    const options = document.getElementById('edit-html-options');
+
+    if (htmlFiles.length <= 1) {
+      selector.style.display = 'none';
+      return;
+    }
+
+    selector.style.display = 'block';
+    options.innerHTML = htmlFiles.map(f => `
+      <label class="html-option">
+        <input type="radio" name="edit-main-html" value="${f.name}"
+          ${f.name === editMainHtmlFile ? 'checked' : ''}
+          onchange="selectEditMainHtml('${f.name.replace(/'/g, "\\'")}')">
+        ${f.name}
+      </label>
+    `).join('');
+  }
+
+  function renderEditFileList() {
+    const el = document.getElementById('edit-file-list');
+    el.innerHTML = editSelectedFiles.map(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      const isHtml = ['html', 'htm'].includes(ext);
+      const isMain = f.name === editMainHtmlFile;
+      const cls = isHtml ? 'html'
+        : ext === 'css' ? 'css'
+        : ext === 'js' ? 'js'
+        : ['png','jpg','jpeg','gif','svg','webp','ico'].includes(ext) ? 'img' : '';
+      const badge = isMain
+        ? '<span class="index-badge">index.html</span>'
+        : '';
+      return `<span class="file-tag ${cls}">${f.name}${badge}</span>`;
+    }).join('');
+  }
+
+  // Drag & drop for edit modal
+  const editDz = document.getElementById('edit-dropzone');
+  editDz.addEventListener('dragover', e => { e.preventDefault(); editDz.classList.add('dragover'); });
+  editDz.addEventListener('dragleave', () => editDz.classList.remove('dragover'));
+  editDz.addEventListener('drop', e => {
+    e.preventDefault();
+    editDz.classList.remove('dragover');
+    handleEditFiles(e.dataTransfer.files);
+  });
+
+  async function saveEdit() {
+    if (editingIndex === null) return;
+
+    const empresa = document.getElementById('edit-empresa').value.trim();
+    const contexto = document.getElementById('edit-contexto').value.trim();
+
+    if (!empresa || !contexto) {
+      alert('❌ Preencha todos os campos');
+      return;
+    }
+
+    const btn = document.querySelector('#edit-modal .btn-primary');
+    const spinner = document.getElementById('edit-spinner');
+    const label = document.getElementById('edit-label');
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    label.textContent = 'Salvando...';
+
+    try {
+      const deployment = allDeployments[editingIndex];
+
+      // If files are selected, upload them via deploy endpoint
+      if (editSelectedFiles.length > 0) {
+        const fd = new FormData();
+        fd.append('empresa', empresa);
+        fd.append('contexto', contexto);
+        if (editMainHtmlFile) fd.append('mainHtml', editMainHtmlFile);
+        editSelectedFiles.forEach(f => fd.append('files', f));
+
+        const res = await fetch('/api/deploy', { method: 'POST', body: fd });
+
+        // Read SSE stream to completion
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = JSON.parse(line.slice(6));
+
+            if (data.done) {
+              if (data.success) {
+                alert('✅ Deploy atualizado com sucesso!');
+                closeEditModal();
+                loadDeployments();
+              } else {
+                alert('❌ Erro: ' + data.msg);
+              }
+              break;
+            }
+          }
+        }
+      } else {
+        // No files, just update metadata
+        const res = await fetch(`/api/deployments/${editingIndex}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ empresa, contexto })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert('✅ Deploy atualizado com sucesso!');
+          closeEditModal();
+          loadDeployments();
+        } else {
+          alert('❌ Erro: ' + data.error);
+        }
+      }
+    } catch (err) {
+      alert('❌ Erro ao salvar: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Salvar';
+    }
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('edit-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'edit-modal') closeEditModal();
+  });
+
+  // ── User Management ───────────────────────────────────────
+  let allUsers = [];
+  let editingUserId = null;
+
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/users');
+      if (!res.ok) {
+        alert('❌ Erro ao carregar usuários. Verifique se você é administrador.');
+        return;
+      }
+
+      allUsers = await res.json();
+      renderUsers();
+    } catch (err) {
+      alert('❌ Erro: ' + err.message);
+    }
+  }
+
+  function renderUsers() {
+    const el = document.getElementById('users-list');
+
+    if (!allUsers.length) {
+      el.innerHTML = '<div style="color: var(--muted); font-size:14px; text-align:center; padding:20px 0;">Nenhum usuário encontrado</div>';
+      return;
+    }
+
+    el.innerHTML = allUsers.map(u => `
+      <div class="user-item">
+        <div class="user-info">
+          <div class="user-name">
+            ${u.username}
+            ${u.isAdmin ? '<span class="badge admin">Admin</span>' : '<span class="badge">Usuário</span>'}
+          </div>
+          <div class="user-meta">
+            <span>ID: ${u.id}</span>
+            <span>Criado: ${new Date(u.createdAt).toLocaleDateString('pt-BR')}</span>
+          </div>
+        </div>
+        <div class="user-actions">
+          <button onclick="openEditUserModal(${u.id})" class="btn btn-icon" title="Editar" style="color: var(--accent); border-color: rgba(16,185,129,0.5);">✏️</button>
+          <button onclick="deleteUser(${u.id})" class="btn btn-icon" title="Deletar" style="color: var(--error); border-color: rgba(255,59,92,0.5);">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function createUser() {
+    const username = document.getElementById('new-username').value.trim();
+    const password = document.getElementById('new-password').value.trim();
+    const isAdmin = document.getElementById('new-isAdmin').checked;
+
+    if (!username || !password) {
+      alert('❌ Preencha todos os campos');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, isAdmin })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ Usuário criado com sucesso!');
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('new-isAdmin').checked = false;
+        loadUsers();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro: ' + err.message);
+    }
+  }
+
+  function openEditUserModal(userId) {
+    editingUserId = userId;
+    const user = allUsers.find(u => u.id === userId);
+
+    if (!user) return;
+
+    document.getElementById('edit-user-username').value = user.username;
+    document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-isAdmin').checked = user.isAdmin;
+
+    document.getElementById('edit-user-modal').classList.add('show');
+  }
+
+  function closeEditUserModal() {
+    editingUserId = null;
+    document.getElementById('edit-user-modal').classList.remove('show');
+  }
+
+  async function saveUserEdit() {
+    if (editingUserId === null) return;
+
+    const username = document.getElementById('edit-user-username').value.trim();
+    const password = document.getElementById('edit-user-password').value.trim();
+    const isAdmin = document.getElementById('edit-user-isAdmin').checked;
+
+    if (!username) {
+      alert('❌ Username é obrigatório');
+      return;
+    }
+
+    const body = { username, isAdmin };
+    if (password) {
+      body.password = password;
+    }
+
+    try {
+      const res = await fetch(`/api/users/${editingUserId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ Usuário atualizado com sucesso!');
+        closeEditUserModal();
+        loadUsers();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro: ' + err.message);
+    }
+  }
+
+  async function deleteUser(userId) {
+    if (!confirm('⚠️ ATENÇÃO: Deletar este usuário?\n\nEsta ação não pode ser desfeita.')) return;
+
+    try {
+      const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ Usuário deletado com sucesso!');
+        loadUsers();
+      } else {
+        alert('❌ Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('❌ Erro: ' + err.message);
+    }
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('edit-user-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'edit-user-modal') closeEditUserModal();
+  });
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' })
+      + '<br>' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── Theme Toggle ──────────────────────────────────────────
+  function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+    if (newTheme === 'light') {
+      html.setAttribute('data-theme', 'light');
+    } else {
+      html.removeAttribute('data-theme');
+    }
+
+    localStorage.setItem('theme', newTheme);
+  }
+
+  function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const html = document.documentElement;
+
+    if (savedTheme === 'light') {
+      html.setAttribute('data-theme', 'light');
+    } else {
+      html.removeAttribute('data-theme');
+    }
+  }
+
+  // Load theme before anything else
+  loadTheme();
+
+  // ── Init ──────────────────────────────────────────────────
+  checkAuth();
+</script>
+</body>
+</html>
